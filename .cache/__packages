@@ -1,0 +1,7 @@
+base
+data.table
+ggplot2
+pander
+plyr
+reshape2
+scales

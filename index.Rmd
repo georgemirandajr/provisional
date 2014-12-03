@@ -1,0 +1,204 @@
+---
+title       : Work Cell Pilot
+subtitle    : Results and Recommendations
+author      : 
+job         : 
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+<!-- Limit image width and height -->
+<style type='text/css'>
+img {
+    max-height: 560px;
+    max-width: 964px;
+}
+</style>
+
+<!-- Center image on slide -->
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+<script type='text/javascript'>
+$(function() {
+    $("p:has(img)").addClass('centered');
+});
+</script>
+
+# Historical ballot accountability figures
+  
+  
+```{r, echo=FALSE, fig.width=9, fig.height=6, fig.align='center'}
+## Load packages
+library(ggplot2)
+library(reshape2)
+library(pander)
+library(plyr)
+library(data.table)
+
+## Load data
+historical <<- read.csv("./historical.csv")
+## Clean data
+historical$Volume <- gsub(",", "", historical$Volume)
+historical$Volume <- as.numeric(historical$Volume)
+
+historical$Diff <- gsub(",", "", historical$Diff)
+historical$Diff <- as.numeric(historical$Diff)
+
+historical$Election <- as.Date(historical$Election, format = "%m/%d/%Y")
+
+historical <- mutate(historical, Pct = (Diff/Volume)*100)
+
+## Rename variables
+colnames(historical) <- c("Election", "Volume", "Diff", "%")
+
+set.alignment('centre', row.names = 'right')
+historical <- historical[c(1:6,8:13,18,21),]
+
+pander(historical, style = "rmarkdown")
+
+```
+
+---
+
+# Volume and Discrepancies Over Time
+
+```{r, echo=FALSE, fig.width=11, fig.height=7, fig.align='center'}
+library(scales)
+library(ggplot2)
+library(reshape2)
+historical <<- read.csv("./historical.csv")
+historical$Volume <- gsub(",", "", historical$Volume)
+historical$Volume <- as.numeric(historical$Volume)
+
+historical$Diff <- gsub(",", "", historical$Diff)
+historical$Diff <- as.numeric(historical$Diff)
+
+historical$Election <- as.Date(historical$Election, format = "%m/%d/%Y")
+
+## Rename variables
+colnames(historical) <- c("Election", "Volume", "Discrepancies")
+
+## Plot
+em <- melt(historical, id = "Election")
+p <- qplot(Election, value, data = em, geom = "line", group = variable) +
+      scale_y_continuous(labels = comma) +
+      facet_grid(variable ~ ., scale = "free_y") +
+      geom_line(aes(colour = variable, size = 0.10)) +
+      theme(legend.position = "none") +
+        labs(title = "", y = "", colour = "")
+p
+```
+
+---
+
+# As we get more ballots, the number of discrepancies increases
+
+```{r, echo=FALSE, fig.align='center'}
+library(scales)
+library(ggplot2)
+historical <<- read.csv("./historical.csv")
+
+historical$Volume <- gsub(",", "", historical$Volume)
+historical$Volume <- as.numeric(historical$Volume)
+
+historical$Diff <- gsub(",", "", historical$Diff)
+historical$Diff <- as.numeric(historical$Diff)
+
+historical$Election <- as.Date(historical$Election, format = "%m/%d/%Y")
+
+## Rename variables
+colnames(historical) <- c("Election", "Volume", "Discrepancies")
+
+## Plot
+p2 <- qplot(Volume, Discrepancies, data = historical) +
+      aes(colour = "red", size = 2) +
+      labs(colour = "", size = "") +
+      scale_x_continuous(labels = comma) +
+        theme(legend.position = "none")
+p2
+```
+
+* The only occasions when we had zero discrepancies were times when we received under 2,000 provisionals.
+
+---
+
+# Work Cell Pilot
+
+![](X:/Ballot Accountability/work cell/Workcell2.jpg)
+
+---
+
+# Work Cell Design
+
+* Signature verification, open envelopes, enhance/remake ballots, process write-ins, and send to tally 
+* 10% of staff participated in the pilot 
+* 2 trays delivered to the work cell per day
+* The work cell only counted ballots 2 times: entrance and exit.
+
+---
+
+# Today's Accountability
+
+* Work Cell volume: 17,600 (15%)  
+* Work Cell discrepancies: 0 
+
+* Normal Process volume: 104,000 (85%)  
+* Normal Process discrepancies: 128
+
+* November 2010 Gubernatorial Election (last comparable election)
+* If we had 15% of that volume, we would have had 725 discrepancies 
+
+```{r echo=FALSE}
+hist <- historical[4,]
+pander(hist, style="rmarkdown")
+```
+
+---
+
+# Productivity Ratios
+
+```{r echo=FALSE, warning=FALSE, fig.width=11, fig.height=7, fig.align='center'}
+library(ggplot2)
+library(reshape2)
+comparison <- read.csv("./comparison.csv")
+comparison$Date <- as.POSIXct(comparison$Date, format = "%m/%d/%Y")
+comparison$pctStaffWC <- round(comparison$pctStaffWC, 2)
+comparison$pctProdWC <- round(comparison$pctProdWC, 2)
+comparison$pctStaffReg <- round(comparison$pctStaffReg, 2)
+comparison$pctProdWC <- round(comparison$pctProdWC, 2)
+## Rename variables
+colnames(comparison) <- c("Date", "Work Cell Staff Pct", "Work Cell Production Pct", "Regular Staff Pct", "Regular Production Pct")
+comparison <- comparison[1:18,]
+#pander(comparison, style = "rmarkdown")
+
+melt <- melt(comparison, id = "Date")
+ggplot(melt, aes(Date, value, colour = as.factor(variable), group = as.factor(variable))) + 
+        geom_line() + 
+        scale_fill_discrete(name="Work Cell vs. Regular", breaks = c("Work Cell Staff", "Work Cell Production", "Regular Staff", "Regular Production"), labels=c("Work Cell Staff", "Work Cell Production", "Regular Staff", "Regular Production")) +
+        theme(legend.position = c(.8,.5)) + 
+        labs(title = "", y = "Percent", colour = "")        
+
+```
+
+---
+
+# Benefits/Observations
+
+* Eliminated 50 hours of counting (15 min per tray * 200 trays) each time we count
+* Faster training because supervisor has time now
+* Enabled cross-training of Canvass operations
+* Write-ins - being in the same room eliminates a count
+* Ballot Duplication - faster communication without handoffs
+
+---
+
+# Recommendations
+
+* Don't slow the flow to work cell
+* Single-piece flow all the way (Signature Verification through Canvass)
+* Ergonomics
+* Add one additional ballot duplication PC and scanner 
+* Hybrid for large elections (UDEL)
